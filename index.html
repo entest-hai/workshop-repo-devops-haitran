@@ -1,26 +1,406 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Learning AWS</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        .titlebar {
-            background-color: #6298e0;
-            text-align: center;
-            padding: 5px;
-            color: white;
-            font-family: Arial, Helvetica, sans-serif;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DevOps CI/CD on AWS — Swinburne Workshop</title>
+<style>
+  :root{
+    --swin-red:#E4002B;
+    --swin-dark:#111218;
+    --aws-orange:#FF9900;
+    --aws-navy:#232F3E;
+    --ink:#1b1f27;
+    --muted:#5b6472;
+    --bg:#f5f6f8;
+    --card:#ffffff;
+    --line:#e3e6eb;
+    --source:#4a63e7;
+    --build:#5a3ec8;
+    --deploy:#3b2fb0;
+    --ecr:#e8792b;
+    --ecs:#e8792b;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:"Segoe UI",Roboto,-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.55;
+  }
 
-    </style>
+  /* ---------- Header ---------- */
+  header.hero{
+    background:linear-gradient(135deg,#17181f 0%,#232F3E 60%,#2d1416 100%);
+    color:#fff;
+    padding:34px 24px 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.hero::after{
+    content:"";
+    position:absolute;right:-120px;top:-120px;
+    width:380px;height:380px;border-radius:50%;
+    background:radial-gradient(circle at center,rgba(255,153,0,.22),transparent 70%);
+  }
+  .brandbar{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:20px;max-width:1120px;margin:0 auto;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand .divider{width:1px;height:46px;background:rgba(255,255,255,.25);}
+  .org-name{font-size:13px;letter-spacing:.5px;line-height:1.2;}
+  .org-name strong{display:block;font-size:17px;font-weight:700;}
+  .org-name span{color:#c7ccd6;font-size:12px;}
+  .hero-title{max-width:1120px;margin:30px auto 0;}
+  .hero-title h1{
+    margin:0;font-size:34px;font-weight:800;letter-spacing:-.5px;
+  }
+  .hero-title h1 .accent{color:var(--aws-orange);}
+  .hero-title p{margin:10px 0 0;color:#cdd3dd;font-size:16px;max-width:760px;}
+  .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+  .chip{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+    padding:6px 13px;border-radius:999px;font-size:13px;color:#eef1f6;
+  }
+
+  /* ---------- Layout ---------- */
+  main{max-width:1120px;margin:0 auto;padding:0 24px 60px;}
+  section{margin-top:46px;}
+  .section-head{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .section-head .num{
+    width:30px;height:30px;border-radius:8px;flex:none;
+    background:var(--swin-red);color:#fff;font-weight:700;font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .section-head h2{margin:0;font-size:23px;font-weight:750;}
+  .section-sub{color:var(--muted);font-size:15px;margin:0 0 20px 42px;}
+
+  /* ---------- Diagram ---------- */
+  .diagram-card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:26px;box-shadow:0 8px 24px rgba(20,30,50,.06);overflow-x:auto;
+  }
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:13px;color:var(--muted);}
+  .legend span{display:inline-flex;align-items:center;gap:7px;}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
+
+  /* ---------- Screenshots ---------- */
+  .shot{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    overflow:hidden;box-shadow:0 8px 24px rgba(20,30,50,.06);margin-top:26px;
+  }
+  .shot .cap{
+    display:flex;align-items:flex-start;gap:14px;padding:18px 22px;
+    border-bottom:1px solid var(--line);background:#fbfcfd;
+  }
+  .shot .cap .step{
+    flex:none;width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg,var(--aws-orange),#e8792b);
+    color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px;
+  }
+  .shot .cap h3{margin:0;font-size:17px;font-weight:700;}
+  .shot .cap p{margin:3px 0 0;color:var(--muted);font-size:14px;}
+  .shot img{
+    display:block;width:100%;height:auto;background:#eef1f5;
+  }
+  .shot .src{
+    font-size:12px;color:#8a93a3;padding:9px 22px;border-top:1px solid var(--line);
+    word-break:break-all;background:#fbfcfd;
+  }
+  .shot .src a{color:var(--source);text-decoration:none;}
+  .shot .src a:hover{text-decoration:underline;}
+
+  /* ---------- Footer ---------- */
+  footer{
+    background:var(--aws-navy);color:#cdd3dd;text-align:center;
+    padding:26px 24px;font-size:13px;
+  }
+  footer strong{color:#fff;}
+
+  @media(max-width:620px){
+    .hero-title h1{font-size:26px;}
+    .section-head h2{font-size:20px;}
+  }
+</style>
 </head>
-
 <body>
-    <div class="titlebar">
-        <h1>Learning DevOps in</h1> <img src="AWS_logo.png" /><br />
-	<h1><strong>Executing v1 on AWS Fargate</strong></h1>
 
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="brandbar">
+    <div class="brand">
+      <!-- Swinburne original emblem (stylized, not the trademarked logo) -->
+      <svg width="52" height="52" viewBox="0 0 64 64" aria-label="Swinburne emblem" role="img">
+        <defs>
+          <linearGradient id="sw" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ff355a"/><stop offset="1" stop-color="#E4002B"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 3 L57 13 V33 C57 48 46 57 32 61 C18 57 7 48 7 33 V13 Z" fill="url(#sw)"/>
+        <path d="M22 26 h20 M22 34 h20 M26 20 v24 M38 20 v24" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+      </svg>
+      <div class="org-name">
+        <strong>Swinburne</strong>
+        <span>University of Technology</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- AWS stylized wordmark (original interpretation) -->
+      <div style="text-align:left;">
+        <div style="font-size:30px;font-weight:800;letter-spacing:-1px;color:#fff;line-height:.8;">aws</div>
+        <svg width="56" height="14" viewBox="0 0 56 14" aria-label="aws smile" role="img">
+          <path d="M3 4 C18 12 38 12 50 5" stroke="var(--aws-orange)" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M47 3 l5 2 -2 5" stroke="var(--aws-orange)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
-</body>
+    <div class="org-name" style="text-align:right;">
+      <strong style="color:var(--aws-orange)">Cloud Workshop</strong>
+      <span>Hands-on Lab · 2026</span>
+    </div>
+  </div>
 
+  <div class="hero-title">
+    <h1>Building a <span class="accent">DevOps CI/CD Pipeline</span> on AWS</h1>
+    <p>From a push on GitHub to a live container on Amazon ECS — automated build, image publishing, and blue/green deployment with AWS CodePipeline, CodeBuild, and CodeDeploy.</p>
+    <div class="chips">
+      <span class="chip">AWS CodePipeline</span>
+      <span class="chip">AWS CodeBuild</span>
+      <span class="chip">AWS CodeDeploy</span>
+      <span class="chip">Amazon ECR</span>
+      <span class="chip">Amazon ECS (Blue/Green)</span>
+      <span class="chip">GitHub Source</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ DIAGRAM ============ -->
+  <section id="architecture">
+    <div class="section-head"><div class="num">◆</div><h2>Pipeline Architecture</h2></div>
+    <p class="section-sub">Code committed to GitHub triggers a three-stage pipeline. CodeBuild packages a Docker image into Amazon ECR, then CodeDeploy rolls out a new version to the ECS cluster.</p>
+
+    <div class="diagram-card">
+      <svg viewBox="0 0 1120 460" width="100%" role="img" aria-label="AWS CI/CD pipeline diagram">
+        <defs>
+          <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto">
+            <path d="M1 1 L9 6 L1 11" fill="none" stroke="#3a4253" stroke-width="2"/>
+          </marker>
+          <style>
+            .lbl{font:600 15px 'Segoe UI',Arial;fill:#1b1f27;}
+            .sub{font:italic 14px 'Segoe UI',Arial;fill:#5b6472;}
+            .tiny{font:600 12px 'Segoe UI',Arial;fill:#5b6472;}
+            .ico{fill:#fff;}
+          </style>
+        </defs>
+
+        <!-- Pipeline capsule -->
+        <rect x="150" y="70" width="640" height="200" rx="100" fill="#f3f4f8" stroke="#d3d8e2" stroke-width="2"/>
+        <text x="245" y="110" class="sub">Source</text>
+        <text x="400" y="110" class="sub">Build</text>
+        <text x="560" y="110" class="sub">Deploy</text>
+
+        <!-- CodePipeline badge -->
+        <rect x="150" y="18" width="38" height="38" rx="9" fill="#4a63e7"/>
+        <path d="M160 37 l-4 0 M168 29 l6 8 -6 8 M160 45 h14" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="198" y="42" class="lbl">AWS CodePipeline</text>
+
+        <!-- Code source doc -->
+        <g>
+          <rect x="20" y="150" width="60" height="70" rx="8" fill="#fff" stroke="#39c0ed" stroke-width="3"/>
+          <text x="50" y="192" text-anchor="middle" style="font:700 20px monospace;fill:#39c0ed;">{ }</text>
+          <text x="50" y="240" text-anchor="middle" class="tiny">Code</text>
+        </g>
+        <line x1="84" y1="170" x2="145" y2="170" stroke="#3a4253" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+        <!-- GitHub (Source) -->
+        <g>
+          <circle cx="255" cy="175" r="30" fill="#17181f"/>
+          <path d="M255 157 a18 18 0 0 0 -6 35 c0 -3 0 -6 1 -8 c-6 1 -8 -3 -9 -6 c-1 -2 -2 -3 -3 -4 c-1 -1 2 -1 3 1 c2 3 5 2 7 1 c0 -2 1 -3 2 -4 c-6 -1 -11 -4 -11 -12 a9 9 0 0 1 2 -6 a8 8 0 0 1 1 -6 s2 -1 6 2 a19 19 0 0 1 10 0 c4 -3 6 -2 6 -2 a8 8 0 0 1 1 6 a9 9 0 0 1 2 6 c0 8 -5 11 -11 12 c1 1 2 3 2 6 v7 a18 18 0 0 0 -6 -35 z" fill="#fff"/>
+          <text x="255" y="235" text-anchor="middle" class="tiny">GitHub</text>
+        </g>
+        <line x1="290" y1="175" x2="358" y2="175" stroke="#3a4253" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+        <!-- CodeBuild -->
+        <g>
+          <rect x="365" y="145" width="62" height="62" rx="12" fill="#5a3ec8"/>
+          <path d="M382 180 l-6 -6 6 -6 M410 168 l6 6 -6 6 M400 165 l-8 20" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="396" y="235" text-anchor="middle" class="tiny">CodeBuild</text>
+        </g>
+        <line x1="431" y1="175" x2="498" y2="175" stroke="#3a4253" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+        <!-- CodeDeploy -->
+        <g>
+          <rect x="505" y="145" width="62" height="62" rx="12" fill="#3b2fb0"/>
+          <circle cx="536" cy="176" r="17" fill="none" stroke="#fff" stroke-width="2.4"/>
+          <path d="M536 159 v34 M519 176 h34 M524 164 a23 23 0 0 1 24 0" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <text x="536" y="235" text-anchor="middle" class="tiny">CodeDeploy</text>
+        </g>
+
+        <!-- new version barcode -->
+        <g>
+          <rect x="800" y="150" width="48" height="44" rx="4" fill="#fff" stroke="#3aa548" stroke-width="2"/>
+          <g stroke="#3aa548" stroke-width="2">
+            <line x1="808" y1="156" x2="808" y2="188"/><line x1="814" y1="156" x2="814" y2="188"/>
+            <line x1="820" y1="156" x2="820" y2="188"/><line x1="828" y1="156" x2="828" y2="188"/>
+            <line x1="834" y1="156" x2="834" y2="188"/><line x1="840" y1="156" x2="840" y2="188"/>
+          </g>
+          <text x="824" y="212" text-anchor="middle" class="tiny">new</text>
+          <text x="824" y="226" text-anchor="middle" class="tiny">version</text>
+        </g>
+        <line x1="724" y1="175" x2="796" y2="175" stroke="#3a4253" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+        <!-- ECR branch down -->
+        <line x1="396" y1="270" x2="396" y2="330" stroke="#3a4253" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <g>
+          <rect x="365" y="340" width="62" height="62" rx="12" fill="#e8792b"/>
+          <path d="M396 350 l24 13 v18 l-24 13 -24 -13 v-18 z" fill="none" stroke="#fff" stroke-width="2.3" stroke-linejoin="round"/>
+          <path d="M396 350 v26 M372 363 l24 13 24 -13" stroke="#fff" stroke-width="2.3" fill="none"/>
+          <text x="396" y="424" text-anchor="middle" class="tiny">Amazon ECR</text>
+        </g>
+
+        <!-- ECS Cluster -->
+        <g>
+          <rect x="880" y="110" width="220" height="130" rx="12" fill="#eef1f6" stroke="#d3d8e2"/>
+          <rect x="900" y="130" width="46" height="46" rx="10" fill="#e8792b"/>
+          <path d="M923 138 l16 9 v18 l-16 9 -16 -9 v-18 z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+          <text x="960" y="150" class="lbl">ECS Cluster</text>
+          <rect x="960" y="178" width="40" height="40" rx="7" fill="#e8792b"/>
+          <g stroke="#fff" stroke-width="2" fill="none"><line x1="970" y1="190" x2="992" y2="190"/><line x1="970" y1="198" x2="992" y2="198"/><line x1="970" y1="206" x2="992" y2="206"/></g>
+          <text x="1010" y="202" class="tiny">Application</text>
+        </g>
+        <line x1="848" y1="172" x2="875" y2="172" stroke="#3a4253" stroke-width="2.5" marker-end="url(#arrow)"/>
+      </svg>
+
+      <div class="legend">
+        <span><i class="dot" style="background:var(--source)"></i> Source (GitHub)</span>
+        <span><i class="dot" style="background:var(--build)"></i> Build (CodeBuild)</span>
+        <span><i class="dot" style="background:var(--deploy)"></i> Deploy (CodeDeploy)</span>
+        <span><i class="dot" style="background:var(--ecr)"></i> Image registry (ECR)</span>
+        <span><i class="dot" style="background:var(--ecs)"></i> Runtime (ECS)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WALKTHROUGH ============ -->
+  <section id="walkthrough">
+    <div class="section-head"><div class="num">▦</div><h2>Workshop Walkthrough</h2></div>
+    <p class="section-sub">Follow the lab screen-by-screen — scroll down to see each step of the pipeline come to life.</p>
+
+    <!-- 1: code-server IDE -->
+    <figure class="shot">
+      <figcaption class="cap">
+        <div class="step">1</div>
+        <div>
+          <h3>Your cloud development environment</h3>
+          <p>A browser-based VS Code (code-server) running on an EC2 instance, served through Amazon CloudFront — your workspace for the lab.</p>
+        </div>
+      </figcaption>
+      <img loading="lazy" alt="Browser-based VS Code workshop environment"
+           src="https://raw.githubusercontent.com/entest-hai/workshop-repo-devops-haitran/main/Screenshot%202026-10-17%20at%202.59.56%E2%80%AFPM.png" />
+      <div class="src">Source: <a href="https://github.com/entest-hai/workshop-repo-devops-haitran">github.com/entest-hai/workshop-repo-devops-haitran</a></div>
+    </figure>
+
+    <!-- 2: GitHub repo -->
+    <figure class="shot">
+      <figcaption class="cap">
+        <div class="step">2</div>
+        <div>
+          <h3>The application repository</h3>
+          <p>GitHub holds the app plus the pipeline's contract files: <code>Dockerfile</code>, <code>buildspec.yml</code> (CodeBuild), <code>appspec.yaml</code> + <code>taskdef.json</code> (CodeDeploy / ECS).</p>
+        </div>
+      </figcaption>
+      <img loading="lazy" alt="GitHub repository with Dockerfile, buildspec, appspec and taskdef"
+           src="https://raw.githubusercontent.com/entest-hai/workshop-repo-devops-haitran/main/Screenshot%202026-10-17%20at%203.58.55%E2%80%AFPM.png" />
+      <div class="src">Source: <a href="https://github.com/entest-hai/workshop-repo-devops-haitran">github.com/entest-hai/workshop-repo-devops-haitran</a></div>
+    </figure>
+
+    <!-- 3: Pipeline created, source in progress -->
+    <figure class="shot">
+      <figcaption class="cap">
+        <div class="step">3</div>
+        <div>
+          <h3>Pipeline created &amp; first run starts</h3>
+          <p>AWS CodePipeline <strong>MyFirstPipeline</strong> is provisioned with three stages — Source → Build → Deploy. The Source stage is already pulling from GitHub.</p>
+        </div>
+      </figcaption>
+      <img loading="lazy" alt="CodePipeline created, source stage in progress"
+           src="https://raw.githubusercontent.com/entest-hai/workshop-repo-devops-haitran/main/Screenshot%202026-10-17%20at%203.58.45%E2%80%AFPM.png" />
+      <div class="src">Source: <a href="https://github.com/entest-hai/workshop-repo-devops-haitran">github.com/entest-hai/workshop-repo-devops-haitran</a></div>
+    </figure>
+
+    <!-- 4: Pipeline all green -->
+    <figure class="shot">
+      <figcaption class="cap">
+        <div class="step">4</div>
+        <div>
+          <h3>Build succeeds, blue/green deploy rolls out</h3>
+          <p>Source and Build are green; CodeDeploy is pushing a new version to <strong>Amazon ECS (Blue/Green)</strong> with zero-downtime traffic shifting.</p>
+        </div>
+      </figcaption>
+      <img loading="lazy" alt="CodePipeline all stages succeeded, ECS blue/green deployment in progress"
+           src="https://raw.githubusercontent.com/entest-hai/workshop-repo-devops-haitran/main/Screenshot%202026-10-17%20at%204.01.30%E2%80%AFPM.png" />
+      <div class="src">Source: <a href="https://github.com/entest-hai/workshop-repo-devops-haitran">github.com/entest-hai/workshop-repo-devops-haitran</a></div>
+    </figure>
+
+    <!-- 5 & 6: Kiro Crew tooling -->
+    <figure class="shot">
+      <figcaption class="cap">
+        <div class="step">5</div>
+        <div>
+          <h3>The AI agent workspace</h3>
+          <p>The Kiro Crew dashboard used alongside the lab — spin up a session and let the agent help scaffold and review your pipeline.</p>
+        </div>
+      </figcaption>
+      <img loading="lazy" alt="Kiro Crew dashboard — what are we building today"
+           src="https://raw.githubusercontent.com/entest-hai/workshop-repo-devops-haitran/main/Screenshot%202026-10-17%20at%201.33.48%E2%80%AFPM.png" />
+      <div class="src">Source: <a href="https://github.com/entest-hai/workshop-repo-devops-haitran">github.com/entest-hai/workshop-repo-devops-haitran</a></div>
+    </figure>
+
+    <figure class="shot">
+      <figcaption class="cap">
+        <div class="step">6</div>
+        <div>
+          <h3>Make the environment yours</h3>
+          <p>Personalise the workspace theme before you start — a small touch that makes a long lab more comfortable.</p>
+        </div>
+      </figcaption>
+      <img loading="lazy" alt="Kiro Crew theme customization screen"
+           src="https://raw.githubusercontent.com/entest-hai/workshop-repo-devops-haitran/main/Screenshot%202026-10-17%20at%201.26.33%E2%80%AFPM.png" />
+      <div class="src">Source: <a href="https://github.com/entest-hai/workshop-repo-devops-haitran">github.com/entest-hai/workshop-repo-devops-haitran</a></div>
+    </figure>
+  </section>
+
+  <!-- ============ KEY TERMS ============ -->
+  <section id="terms">
+    <div class="section-head"><div class="num">✦</div><h2>Key Terms (quick reference)</h2></div>
+    <p class="section-sub">Short definitions for the services on this page.</p>
+    <div class="diagram-card" style="padding:0;">
+      <table style="width:100%;border-collapse:collapse;font-size:14.5px;">
+        <tbody>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:13px 20px;width:200px;font-weight:700;color:var(--source);">CodePipeline</td><td style="padding:13px 20px;color:var(--muted);">Orchestrator that wires the stages together and runs them on every code change.</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:13px 20px;font-weight:700;color:var(--build);">CodeBuild</td><td style="padding:13px 20px;color:var(--muted);">Managed build service — runs <code>buildspec.yml</code> to compile code and build the Docker image.</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:13px 20px;font-weight:700;color:var(--deploy);">CodeDeploy</td><td style="padding:13px 20px;color:var(--muted);">Automates releasing the new version to ECS using a blue/green strategy (safe rollback).</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:13px 20px;font-weight:700;color:var(--ecr);">Amazon ECR</td><td style="padding:13px 20px;color:var(--muted);">Private Docker image registry where CodeBuild pushes the container image.</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:13px 20px;font-weight:700;color:var(--ecs);">Amazon ECS</td><td style="padding:13px 20px;color:var(--muted);">Container runtime that runs your application as tasks/services.</td></tr>
+          <tr><td style="padding:13px 20px;font-weight:700;">Blue/Green</td><td style="padding:13px 20px;color:var(--muted);">Run old (blue) and new (green) versions side by side, shift traffic, roll back instantly if needed.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <strong>Swinburne University of Technology</strong> × <strong>AWS</strong> Cloud Workshop &nbsp;·&nbsp; DevOps CI/CD on AWS
+  <div style="margin-top:6px;opacity:.75;">Prepared for students · 2026 · Logos shown are decorative, stylized marks.</div>
+</footer>
+
+</body>
 </html>
+
